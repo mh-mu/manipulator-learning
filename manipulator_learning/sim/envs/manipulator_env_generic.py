@@ -284,7 +284,7 @@ class ManipulatorEnv(gym.Env):
             gm = self.env.rc['gripper_max']
             cur_grip_pos = (obs_dict['actual']['grip'] - gm[1]) / gm[0]
             info_dict['grip_pos'] = cur_grip_pos
-
+        
         if 'grip_pos' in self.state_data:
             return_obs['grip_pos'] = cur_grip_pos
         if 'prev_grip_pos' in self.state_data:

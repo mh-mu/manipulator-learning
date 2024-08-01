@@ -741,9 +741,11 @@ class PBEnv(gym.Env):
                 self._pb_client.removeBody(self.insertion_rod)
             box_pos = list(copy.deepcopy(self.workspace_center))
             box_pos[1] += 0.1
+            #modified to have this fixed
+            box_pos[2] -= 0.02
             self.insertion_box = self._pb_client.loadURDF(self.object_urdf_root +
                                                           "/insertion_box/insertion_block.urdf",
-                                                         box_pos, [0, 0, 0, 1])
+                                                         box_pos, [0, 0, 0, 1], useFixedBase = True)
             if self.task == 'insertion':
                 rod_z = 1.0
                 rod_xy = [.85, -.15]

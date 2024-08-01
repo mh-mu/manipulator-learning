@@ -100,7 +100,7 @@ class ThingInsertMultiview(ThingInsertImage):
 
 class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
-                 image_width=64, image_height=48, success_causes_done=True, **kwargs):
+                 image_width=64, image_height=48, success_causes_done=True, state_data =('pos','grip_pos', 'prev_grip_pos'),  **kwargs):
         self.action_space = spaces.Box(-1, 1, (7,), dtype=np.float32)
         self.observation_space = spaces.Dict({
             'obs': spaces.Box(-np.inf, np.inf, (13,), dtype=np.float32),
@@ -108,7 +108,7 @@ class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
             'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
         })
         super().__init__('pick_insertion_small_fast_grip', True, dense_reward, 'b',
-                         state_data=('pos', 'grip_pos', 'prev_grip_pos'),
+                         state_data=state_data, #,'force_torque'),
                          max_real_time=max_real_time, n_substeps=n_substeps, success_causes_done=success_causes_done,
                          image_width=image_width, image_height=image_height, control_frame='b',
                          max_gripper_vel=2.4, pos_limits=[[.55, -.45, .64], [.9, .05, 0.9]], **kwargs)

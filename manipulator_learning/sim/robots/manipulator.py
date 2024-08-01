@@ -69,15 +69,18 @@ class Manipulator:
         self.init_base_pos = base_pos
         self.init_base_rot = base_rot
 
+        # print('*****')
+        # print(urdf_path)
+    
         # user selected parameters -- non-private can be modified on the fly
         if not self_collision:
             self._arm = [self._pb_client.loadURDF(urdf_path)]  # arm object
         else:
             self._arm = [self._pb_client.loadURDF(urdf_path, flags=pb_client.URDF_USE_SELF_COLLISION)]  # arm object
+
         self._num_jnt = self._pb_client.getNumJoints(self._arm[0])  # number of joints
         self._num_lnk = self._pb_client.getNumJoints(self._arm[0])  # Equal to the number of joints I think
         self._jnt_infos = [self._pb_client.getJointInfo(self._arm[0], i) for i in range(self._num_jnt)]  # list of joint info objects
-
         self._active_ind = [j for j, i in zip(range(len(self._jnt_infos)), self._jnt_infos) if
                             i[JOINT_ACTIVE] > -1]  # indices of active joints
         self._true_active_ind = self._active_ind[:]
@@ -87,7 +90,9 @@ class Manipulator:
             self._active_ind = list(arm_indices) + list(gripper_indices)
         else:
             self._arm_ind = [e for e in self._active_ind if e not in tuple(self._gripper_ind)]  # arm joint indices
-
+        # print('*****')
+        # print(self._pb_client.getJointInfo(self._arm[0],self._arm_ind[-1]))
+        # exit()
         self._num_jnt_gripper = len(self._gripper_ind)  # number of gripper joints
         self._num_jnt_arm = len(self._active_ind) - self._num_jnt_gripper  # number of arm joints
 
@@ -193,11 +198,13 @@ class Manipulator:
 
         # rotate gravity to subtract from force measurement
         ft_pos, ft_orient = self._pb_client.getLinkState(self._arm[0], self._arm_ind[-1])[4:6]
+        ## the above does not report active joint torque
+        applied_joint_torque = self._pb_client.getJointState(self._arm[0], self._arm_ind[-1])[3]
         R_ft = self.pb_pos_orient_to_mat(ft_pos, ft_orient)[:3, :3]
         gravity_in_ft = R_ft.dot(self.ft_gravity)
         ft[:3] = ft[:3] - gravity_in_ft
         self.ee_ft = ft
-
+        self.ee_ft[-2] = applied_joint_torque
         return self.ee_ft
 
     def get_joint_states(self):
@@ -481,7 +488,6 @@ class Manipulator:
             t_vel = self.impedance_mod_vel(t_vel, 5, .5, impedance_K)  # this doesn't work too well at the moment
 
         dq, res, rank, a = lstsq(j[task, :],t_vel[task],rcond = None) # LS solver
-
         self.set_joint_velocity_goal(np.concatenate((dq, np.zeros(self._num_jnt_gripper))))  # Add zeros for gripper
 
     def impedance_mod_vel(self, vel, f_max, t_max, K=np.eye(6) * 1e3):

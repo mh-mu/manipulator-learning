@@ -181,7 +181,7 @@ class ManipulatorWrapper:
         :param ref_frame: Reference frame for action. Should be t or b.
         :return:
         """
-
+        #print(t_command, r_command, g_command, self.control_method)
         self.g_command = g_command
 
         if self.valid_r_dof is not None:
@@ -376,7 +376,8 @@ class ManipulatorWrapper:
                     t_command_rot = t_command_rot / t_vel_mag * max_t_vel
                 if r_vel_mag > max_r_vel:
                     r_command_rot = r_command_rot / r_vel_mag * max_r_vel
-
+            # print(np.array([*t_command_rot, *r_command_rot]))
+            # print(self.pos_limits)
             # enforce position limits if implemented as an instance member
             if self.pos_limits is not None:
                 # since both the action and the pos limits are now rotated into the base frame,
@@ -389,7 +390,7 @@ class ManipulatorWrapper:
                         t_command_rot[i] = 0
                     elif pos[i] > self.pos_limits[1][i] and t_command_rot[i] > 0:
                         t_command_rot[i] = 0
-
+            #print(np.array([*t_command_rot, *r_command_rot]))
             self.manipulator.set_frame_velocity_goal(self.manipulator._tool_link_ind,
                                                      t_vel=np.array([*t_command_rot, *r_command_rot]),
                                                      task=list(range(6)))
