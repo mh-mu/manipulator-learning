@@ -18,7 +18,7 @@ from manipulator_learning.sim.robots.manipulator_wrapper import ManipulatorWrapp
 
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False
+DEBUG_GUI_ON = True # False
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
