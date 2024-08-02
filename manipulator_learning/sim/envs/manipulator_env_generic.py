@@ -485,11 +485,11 @@ class ManipulatorEnv(gym.Env):
         if self.camera_in_state:
             rgb, depth = self.render('rgb_array')
             return_obs['img'] = rgb
-            return_obs['depth'] = depth
+            #return_obs['depth'] = depth
             return_arr = dict(
                 obs=return_arr,
                 img=rgb,
-                depth=depth
+                #depth=depth
             )
 
         self._return_arr = return_arr
