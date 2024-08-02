@@ -1,11 +1,11 @@
 import copy
 import numpy as np
-from gym import spaces
+#from gym import spaces
+from gymnasium import spaces
 
 from manipulator_learning.sim.envs.manipulator_env_generic import ManipulatorEnv
 from manipulator_learning.sim.envs.configs.thing_default import TWO_FINGER_CONFIG as DEF_CONFIG
 from manipulator_learning.sim.envs.rewards.generic import get_done_suc_fail
-
 
 class ThingInsertGeneric(ManipulatorEnv):
     def __init__(self,
@@ -102,10 +102,17 @@ class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
                  image_width=64, image_height=48, success_causes_done=True, state_data =('pos','grip_pos', 'prev_grip_pos'),  **kwargs):
         self.action_space = spaces.Box(-1, 1, (7,), dtype=np.float32)
+        dim = 0
+        if 'pos' in state_data:
+            dim += 7
+        if 'contact_force' in state_data:
+            dim +=3
+        if 'force_torque' in state_data:
+            dim +=6
         self.observation_space = spaces.Dict({
-            'obs': spaces.Box(-np.inf, np.inf, (13,), dtype=np.float32),
+            'obs': spaces.Box(-np.inf, np.inf, (dim,), dtype=np.float64),
             'img': spaces.Box(0, 255, (image_height, image_width, 3), dtype=np.uint8),
-            'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
+            'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float64)
         })
         super().__init__('pick_insertion_small_fast_grip', True, dense_reward, 'b',
                          state_data=state_data, #,'force_torque'),

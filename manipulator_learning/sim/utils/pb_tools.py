@@ -107,7 +107,7 @@ class BulletClient(object):
     """Clean up connection if not already done."""
     try:
       pybullet.disconnect(physicsClientId=self._client)
-    except pybullet.error:
+    except Exception as e:
       pass
 
   def __getattr__(self, name):

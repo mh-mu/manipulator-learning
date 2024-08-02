@@ -8,7 +8,7 @@ import tkinter as tk
 import PIL.Image, PIL.ImageTk
 
 from manipulator_learning.sim.envs.pb_env import PBEnv
-
+from icecream import ic
 
 PROPRIOCEPTIVE_STATES = ['pos', 'prev_pos', 'grip_pos', 'prev_grip_pos', 'timestep']
 
@@ -134,8 +134,8 @@ class ManipulatorEnv(gym.Env):
                                     int('force_torque' in state_data) * 6 + \
                                     int('vel' in state_data) * (len(self.valid_t_dofs) + len(self.valid_r_dofs)) + \
                                     int('contact_force' in state_data)*3
-
         self._img_env_state_indices = slice(0, img_state_env_highest_ind)
+
 
         if generate_spaces:
             # generate action and observation spaces automatically
