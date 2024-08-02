@@ -42,7 +42,7 @@ config = {
 #     save_code=True,  # optional
 # )
 
-env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','contact_force'))
+env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force'))
 env = EnvCompatibility(env, 'none')
 check_env(env)
 

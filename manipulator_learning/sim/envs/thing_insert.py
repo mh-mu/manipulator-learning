@@ -107,8 +107,12 @@ class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
             dim += 7
         if 'contact_force' in state_data:
             dim +=3
-        if 'force_torque' in state_data:
+        if 'force_torque' 
             dim +=6
+        if 'grip_pos' in state_data:
+            dim += 2
+        if 'prev_grip_pos' in state_data:
+            dim += 4
         self.observation_space = spaces.Dict({
             'obs': spaces.Box(-np.inf, np.inf, (dim,), dtype=np.float32),
             'img': spaces.Box(0, 255, (image_height, image_width, 3), dtype=np.uint8),
