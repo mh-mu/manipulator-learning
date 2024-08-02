@@ -3,8 +3,9 @@ from icecream import ic
 import time
 import numpy as np
 
-env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','force_torque'))
+#env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','force_torque'))
 #env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos'))
+env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','contact_force'))
 obs = env.reset()
 for i in range(50):
     a = env.action_space.sample()

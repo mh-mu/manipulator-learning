@@ -85,14 +85,17 @@ class Manipulator:
                             i[JOINT_ACTIVE] > -1]  # indices of active joints
         self._true_active_ind = self._active_ind[:]
         self._gripper_ind = gripper_indices  # gripper join indices
+        self._gripper_finger_indeces = [18,19,20,21]
         if len(arm_indices) > 0:
             self._arm_ind = list(arm_indices)
             self._active_ind = list(arm_indices) + list(gripper_indices)
         else:
             self._arm_ind = [e for e in self._active_ind if e not in tuple(self._gripper_ind)]  # arm joint indices
         # print('*****')
-        # print(self._pb_client.getJointInfo(self._arm[0],self._arm_ind[-1]))
+        # for i in range(30):
+        #     print(self._pb_client.getJointInfo(self._arm[0],i))
         # exit()
+
         self._num_jnt_gripper = len(self._gripper_ind)  # number of gripper joints
         self._num_jnt_arm = len(self._active_ind) - self._num_jnt_gripper  # number of arm joints
 
@@ -206,6 +209,40 @@ class Manipulator:
         self.ee_ft = ft
         self.ee_ft[-2] = applied_joint_torque
         return self.ee_ft
+
+    def get_finger_force(self):
+        #global frame
+        forces = np.zeros(3)
+        for i in self._gripper_finger_indeces:
+            forces += self._get_force_link(self._arm[0], i)
+
+        #now convert to gripper frame
+        #print(self._pb_client.getJointInfo(self._arm[0], self._arm_ind[-1]))
+        #exit()
+        pos, ori = self._pb_client.getLinkState(self._arm[0],self._ee_link_ind)[4:6]
+        R = self.pb_pos_orient_to_mat(pos, ori)[:3, :3].T
+        return np.dot(R,forces)
+    
+    def _get_force_link(self,body_id, link_id):
+        contact_pts = self._pb_client.getContactPoints(bodyA = body_id,linkIndexA = link_id)
+        total_force = np.zeros(3)
+        #total_torque = np.zeros(3)
+        if contact_pts:
+            #robot_base_pos = self._get_gripper_base_global_position()
+            #link_position = np.array(robot_base_pos)
+            #link_position = np.array(self.pb.getLinkState(self.robot_ID,self.bucket_link_No)[0])
+            for pt in contact_pts:
+                contact_location = np.array(pt[5]) #pt.positionOnA
+                contact_normal_force = pt[9]*np.array(pt[7]) #force value * #contactNormalOnB
+                contact_lateral_force_1 = pt[10]*np.array(pt[11])
+                contact_lateral_force_2 = pt[12]*np.array(pt[13])
+                force = contact_normal_force + contact_lateral_force_1 + contact_lateral_force_2
+                total_force += force
+                
+                #calculate torque
+                #torque_arm = contact_location - link_position
+                #total_torque += np.cross(torque_arm,force) 
+        return total_force #, total_torque
 
     def get_joint_states(self):
         """
@@ -361,7 +398,8 @@ class Manipulator:
             args = [self._arm[0]]
             for i in range(self._num_jnt_arm):
                 kwargs = dict(jointIndex=self._active_ind[i], controlMode=self._pb_client.POSITION_CONTROL,
-                              targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity)
+                              targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity, force=1000)#,
+                            #   positionGain=500, velocityGain=50)
                 if self.pos_ctrl_max_arm_force is not None:
                     kwargs['force'] = self.pos_ctrl_max_arm_force
                 self._pb_client.setJointMotorControl2(*args, **kwargs)
@@ -372,7 +410,7 @@ class Manipulator:
                 self._pb_client.setJointMotorControl2(
                     self._arm[0], jointIndex=self._active_ind[-i],
                     controlMode=self._pb_client.POSITION_CONTROL, targetPosition=cmd[-i],
-                    maxVelocity=self.max_gripper_vel, force=self.gripper_force
+                    maxVelocity=self.max_gripper_vel, force=self.gripper_force,
                 )
 
     def _joint_velocity_control(self, cmd, arm_only=False):
@@ -601,7 +639,6 @@ class Manipulator:
         """
         This function should be configurable
         """
-
         # run iteration of control loop
         if self._control_method == 'p' and self._gripper_control_method == 'p':
             self._joint_position_control(self.pos_cmd, arm_only=False)

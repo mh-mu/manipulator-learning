@@ -132,7 +132,8 @@ class ManipulatorEnv(gym.Env):
                                     int('prev_grip_pos' in state_data) * self.num_grip_fingers * self.num_prev_grip_pos + \
                                     int('timestep' in state_data) + \
                                     int('force_torque' in state_data) * 6 + \
-                                    int('vel' in state_data) * (len(self.valid_t_dofs) + len(self.valid_r_dofs))
+                                    int('vel' in state_data) * (len(self.valid_t_dofs) + len(self.valid_r_dofs)) + \
+                                    int('contact_force' in state_data)*3
 
         self._img_env_state_indices = slice(0, img_state_env_highest_ind)
 
@@ -460,6 +461,14 @@ class ManipulatorEnv(gym.Env):
         if 'timestep' in self.state_data:
             # rescale timestep to be between -1 and 1
             return_obs['timestep'] = (self.ep_timesteps / self._max_episode_steps - .5) * 2
+
+        if 'contact_force' in self.state_data:
+            np.set_printoptions(suppress=True, precision=3)
+            force = self.env.gripper.manipulator.get_finger_force()
+
+            # should we scale?
+            force = np.tanh(force / 100)
+            return_obs['contact_force'] = force 
 
         return_arr = []
         for k in return_obs.keys():
