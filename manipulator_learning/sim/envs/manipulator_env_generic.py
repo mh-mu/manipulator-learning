@@ -475,7 +475,7 @@ class ManipulatorEnv(gym.Env):
             return_arr.append(return_obs[k].flatten())
             if k in PROPRIOCEPTIVE_STATES:
                 img_env_obs.append(return_obs[k].flatten())
-        return_arr = np.concatenate(return_arr)
+        return_arr = np.concatenate(return_arr).astype(np.float32)
 
         # add info dict to return_obs dict after return_arr has already been generated
         info_dict['img_env_state'] = np.concatenate(img_env_obs)
