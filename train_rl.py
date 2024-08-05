@@ -46,9 +46,8 @@ class EvalVideoCallback(BaseCallback):
             
 
             # Save video using OpenCV
-            ic(frames[0].shape)
             height, width, layers = frames[0].shape
-            video_name = f"videos/rl-video-{self.n_calls}.mp4"
+            video_name = f"{wandb.run.dir}/rl-video-{self.n_calls}.mp4"
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             video = cv2.VideoWriter(video_name, fourcc, 30, (width, height))
 
@@ -59,18 +58,18 @@ class EvalVideoCallback(BaseCallback):
             mean_reward = np.mean(episode_rewards)
             std_reward = np.std(episode_rewards)
             
-            # # Log to wandb
-            # wandb.log({
-            #     "eval/mean_reward": mean_reward,
-            #     "eval/std_reward": std_reward,
-            #     "eval/best_mean_reward": max(self.best_mean_reward, mean_reward),
-            # }, step=self.n_calls)
+            # Log to wandb
+            wandb.log({
+                "eval/mean_reward": mean_reward,
+                "eval/std_reward": std_reward,
+                "eval/best_mean_reward": max(self.best_mean_reward, mean_reward),
+            }, step=self.n_calls)
             
-            # Update best mean reward
-            # if mean_reward > self.best_mean_reward:
-            #     self.best_mean_reward = mean_reward
-            #     # Save best model
-            #     self.model.save(f"best_model_{wandb.run.id}")
+            #Update best mean reward
+            if mean_reward > self.best_mean_reward:
+                self.best_mean_reward = mean_reward
+                # Save best model
+                self.model.save(f"{wandb.run.dir}/best_model")
             
             self.last_mean_reward = mean_reward
             
@@ -82,24 +81,23 @@ class EvalVideoCallback(BaseCallback):
         return True
 
 def main():
-
     config = {
         "policy_type": "MultiInputPolicy",
-        "total_timesteps": 1e4,
+        "total_timesteps": 2e6,
         "env_name": "pb_insertion",
-        "eval_every": 1e3,
+        "eval_every": 5e4,
         "n_eval_episodes": 5,
         "video_length": 1000,
     }
 
-    # run = wandb.init(
-    #     project="insertion_test",
-    #     name ="test",
-    #     config=config,
-    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    #     monitor_gym=True,  # auto-upload the videos of agents playing the game
-    #     save_code=True,  # optional
-    # )
+    run = wandb.init(
+        project="insertion_test",
+        name ="no_force",
+        config=config,
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        monitor_gym=True,  # auto-upload the videos of agents playing the game
+        save_code=True,  # optional
+    )
 
     # env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force'))
     env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos'))
@@ -116,19 +114,18 @@ def main():
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])
     eval_env.render_mode = "rgb_array"
-    
-    # eval_env = VecVideoRecorder(eval_env, "videos", record_video_trigger=lambda x: x % config['eval_every'] == 0, video_length=config["video_length"])
+
     
     # Set up callbacks
     eval_video_callback = EvalVideoCallback(eval_env, eval_freq=config['eval_every'], n_eval_episodes=config["n_eval_episodes"])
 
-    # wandb_callback = WandbCallback(
-    #     gradient_save_freq=0,
-    #     model_save_path=f"wandb/{wandb.run.id}",
-    #     verbose=2,
-    # )
+    wandb_callback = WandbCallback(
+        gradient_save_freq=0,
+        model_save_path=f"wandb/{wandb.run.id}",
+        verbose=2,
+    )
 
-    callback = CallbackList([eval_video_callback]) #, wandb_callback])
+    callback = CallbackList([eval_video_callback, wandb_callback])
 
     model.learn(
         total_timesteps=config["total_timesteps"],
@@ -137,7 +134,7 @@ def main():
 
     print(f'starts training for {config["total_timesteps"]} steps')
 
-    model_save_path = os.path.join('data_rl', config['env_name'], 'test')
+    model_save_path = f'{wandb.run.dir}/final_model.pth'
     model.save(model_save_path)
 
    # Final evaluation

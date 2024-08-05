@@ -15,7 +15,7 @@ from manipulator_learning.sim.utils.general import TransformMat, invert_transfor
     trans_quat_to_mat, convert_quat_pb_to_tf
 from manipulator_learning.sim.robots.cameras import EyeInHandCam, WorkspaceCam
 from manipulator_learning.sim.robots.manipulator_wrapper import ManipulatorWrapper, timer
-
+import random
 
 SHOW_PB_FRAME_MARKERS = False
 DEBUG_GUI_ON = False
@@ -741,8 +741,12 @@ class PBEnv(gym.Env):
                 self._pb_client.removeBody(self.insertion_rod)
             box_pos = list(copy.deepcopy(self.workspace_center))
             box_pos[1] += 0.1
-            #modified to have this fixed
+            #Yifan: modified to have this fixed to the table
             box_pos[2] -= 0.02
+            box_pos[0] += random.uniform(-0.03, 0.03)
+            box_pos[1] += random.uniform(-0.03, 0.03)
+
+
             self.insertion_box = self._pb_client.loadURDF(self.object_urdf_root +
                                                           "/insertion_box/insertion_block.urdf",
                                                          box_pos, [0, 0, 0, 1], useFixedBase = True)

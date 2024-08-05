@@ -49,7 +49,6 @@ class ManipulatorEnv(gym.Env):
 
         if config_dict is None:
             config_dict = dict()
-
         if egl and render_opengl_gui:
             raise ValueError("Can't set egl to True and pb_render to True at the same time. User must specifically"
                              "specify egl=False if they want pb_render=True, since egl and pb_render actually"
