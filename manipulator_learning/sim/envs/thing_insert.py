@@ -106,9 +106,9 @@ class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
         if 'pos' in state_data:
             dim += 7
         if 'contact_force' in state_data:
-            dim +=3
-        if 'force_torque' 
-            dim +=6
+            dim += 3
+        if 'force_torque' in state_data:
+            dim += 6
         if 'grip_pos' in state_data:
             dim += 2
         if 'prev_grip_pos' in state_data:
