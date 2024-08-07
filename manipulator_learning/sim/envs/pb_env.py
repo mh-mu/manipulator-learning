@@ -759,11 +759,15 @@ class PBEnv(gym.Env):
                 base_rod_xy_position = self.workspace_center[:2]
                 rod_xy = []
                 for i in range(2):
-                    rod_xy.append(self.np_random.uniform(
-                        low=base_rod_xy_position[i] + self.init_rod_pos[i] - self.rod_random_lim[i] / 2,
-                        high=base_rod_xy_position[i] + self.init_rod_pos[i] + self.rod_random_lim[i] / 2,
-                        size=1
-                    ))
+                    ##yifan: make this task easier by fixing the rod position
+                    # rod_xy.append(self.np_random.uniform(
+                    #     low=base_rod_xy_position[i] + self.init_rod_pos[i] - self.rod_random_lim[i] / 2,
+                    #     high=base_rod_xy_position[i] + self.init_rod_pos[i] + self.rod_random_lim[i] / 2,
+                    #     size=1
+                    # ))
+                    rod_xy.append(
+                        base_rod_xy_position[i] + self.init_rod_pos[i])
+
                 rod_file = '/rod_long.urdf'
             self.insertion_rod = self._pb_client.loadURDF(self.object_urdf_root + rod_file,
                                                           [rod_xy[0], rod_xy[1], rod_z], [0, 0, 0, 1])

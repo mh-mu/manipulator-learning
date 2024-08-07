@@ -410,13 +410,10 @@ class ManipulatorWrapper:
             # cur_pos_match = self.gripper_dp_desired_pose  # using direct control based on actual pos, instead of des
 
             grip_range = self.rc['gripper_max'][0] - self.rc['gripper_max'][1]
-
             # rescale so that g_command of 1 fully opens, 0 fully closes
             g_command_scaled = grip_range * g_command
-
             # default g_command is negative, fully open pos is 1, so we want positive des pos to correspond to open
             des_pos = cur_pos_match - g_command_scaled
-
             self.manipulator.set_gripper_cmd(des_pos)
         else:
             if self.gripper_default_close:

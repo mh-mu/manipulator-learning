@@ -1,5 +1,7 @@
 build/
 env-specs/projects
+wandb/
 *.pdf
 *.pyc
 *.egg-info
+*.png

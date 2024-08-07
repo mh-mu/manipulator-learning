@@ -100,8 +100,8 @@ class ThingInsertMultiview(ThingInsertImage):
 
 class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
-                 image_width=64, image_height=48, success_causes_done=True, state_data =('pos','grip_pos', 'prev_grip_pos'),  **kwargs):
-        self.action_space = spaces.Box(-1, 1, (7,), dtype=np.float32)
+                 image_width=224, image_height=224, success_causes_done=True, state_data =('pos','grip_pos', 'prev_grip_pos'),  **kwargs):
+        self.action_space = spaces.Box(np.array([-0.1,-0.1,-0.1,-0.2,-0.2,-0.2,-0.5]), np.array([0.1,0.1,0.1,0.2,0.2,0.2,0.5]), (7,), dtype=np.float32)
         dim = 0
         if 'pos' in state_data:
             dim += 7

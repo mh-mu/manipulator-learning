@@ -1,5 +1,6 @@
 <?xml version="0.0" ?>
 <robot name="insertion_block.urdf">
+<!-- version used for peg insertion -->
 
 <link name="block">
 	<contact>

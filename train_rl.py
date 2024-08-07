@@ -1,6 +1,6 @@
 import wandb
 import numpy as np
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO,SAC,TD3
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList
@@ -12,6 +12,75 @@ import manipulator_learning.sim.envs as manlearn_envs
 from stable_baselines3.common.evaluation import evaluate_policy
 from icecream import ic
 import cv2
+
+import torch as th
+import torch.nn as nn
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from stable_baselines3.common.torch_layers import FlattenExtractor
+from gym import spaces
+
+class CustomCNN(BaseFeaturesExtractor):
+    def __init__(self, observation_space: spaces.Dict, features_dim: int = 32):
+        super(CustomCNN, self).__init__(observation_space, features_dim)
+        
+        n_input_channels = observation_space['img'].shape[0]
+        
+        # Define a CNN with a more gradual reduction in size and additional layers
+        self.cnn = nn.Sequential(
+            nn.Conv2d(in_channels=n_input_channels, out_channels=8, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
+            nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1)),  # Global average pooling to reduce the spatial dimensions
+            nn.Flatten(),
+        )
+        
+        # Calculate the size of the flattened output
+        with th.no_grad():
+            sample_img = observation_space.sample()['img'].astype(float) / 255.0
+            sample_img = th.as_tensor(sample_img).unsqueeze(0).float()  # Convert to float32
+            n_flatten = self.cnn(sample_img).shape[1]
+        
+        # Linear layers to gradually reduce the feature size
+        self.linear = nn.Sequential(
+            nn.Linear(n_flatten, features_dim),
+            nn.ReLU()
+        )
+
+    def forward(self, observations):
+        # Convert the image to a float32 tensor and normalize (0-1 range)
+        img = observations['img'].float() / 255.0
+        features = self.cnn(img)
+        return self.linear(features)
+
+
+class CombinedExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space, features_dim=256):
+        super(CombinedExtractor, self).__init__(observation_space, features_dim)
+        self.img_feature_extractor = CustomCNN(observation_space, features_dim)
+        self.obs_feature_extractor = FlattenExtractor(observation_space.spaces['obs'])
+        
+        # Combine features from both extractors
+        combined_features_dim = features_dim + self.obs_feature_extractor.features_dim
+        self.linear = nn.Linear(combined_features_dim, features_dim)
+
+    def forward(self, observations):
+        img_features = self.img_feature_extractor(observations)
+        obs_features = self.obs_feature_extractor(observations['obs'])
+        combined_features = th.cat([img_features, obs_features], dim=1)
+        return self.linear(combined_features)
+
+    def _get_features_dim(self):
+        return self.linear.out_features
+
+
 # Custom callback for evaluation and video recording
 class EvalVideoCallback(BaseCallback):
     def __init__(self, eval_env, eval_freq=10000, n_eval_episodes=5, verbose=0):
@@ -80,52 +149,125 @@ class EvalVideoCallback(BaseCallback):
         
         return True
 
+
+class CustomWandbCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super(CustomWandbCallback, self).__init__(verbose)
+        self.episode_rewards = []
+        self.episode_lengths = []
+    def _on_step(self) -> bool:
+        # Log episode reward and length
+        if self.locals['dones'][0]:
+            self.episode_rewards.append(self.locals['rewards'][0])
+            self.episode_lengths.append(self.locals['infos'][0]['episode']['l'])
+            wandb.log({
+                "episode_reward": self.episode_rewards[-1],
+                "episode_length": self.episode_lengths[-1],
+                "mean_100ep_reward": np.mean(self.episode_rewards[-100:]),
+                "mean_100ep_length": np.mean(self.episode_lengths[-100:])
+            })
+        return True
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters())
+
 def main():
+    DEBUG = False
+
     config = {
         "policy_type": "MultiInputPolicy",
+        "algo": "SAC",
+        "use_force": True,
+        "task_name":'SAC_with_force_action_space',
         "total_timesteps": 2e6,
         "env_name": "pb_insertion",
         "eval_every": 5e4,
         "n_eval_episodes": 5,
         "video_length": 1000,
+        
     }
 
-    run = wandb.init(
-        project="insertion_test",
-        name ="no_force",
-        config=config,
-        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-        monitor_gym=True,  # auto-upload the videos of agents playing the game
-        save_code=True,  # optional
-    )
+    if not DEBUG:
+        run = wandb.init(
+            project="insertion_test",
+            name =config['task_name'],
+            config=config,
+            sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+            monitor_gym=True,  # auto-upload the videos of agents playing the game
+            save_code=True,  # optional
+        )
 
-    # env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force'))
-    env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos'))
+    if config['use_force']:
+        state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
+    else:
+        state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
+    
+    env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='dp')
     env = EnvCompatibility(env, 'none')
     check_env(env)
     #env = DummyVecEnv([lambda: env])
-    
     # model
-    model = PPO(config['policy_type'], env, verbose=1)
+    policy_kwargs = dict(
+        features_extractor_class=CombinedExtractor
+    )
+    #model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+    if config['algo'] == "PPO":
+        model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+    elif config['algo'] == "SAC":
+        model = SAC(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+    elif config['algo'] == "RecurrentPPO":
+        model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+    elif config['algo'] == 'TD3':
+        model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+    # model = PPO(config['policy_type'], env, verbose=1)
+    policy = model.policy
+
+    # # Get the feature extractor
+    # feature_extractor = policy.features_extractor
+    # print("Feature Extractor:")
+    # print(feature_extractor)
+    # print(count_parameters(feature_extractor))
+
+    # mlp_extractor = policy.mlp_extractor
+    # print("Mlp Extractor:")
+    # print(mlp_extractor)
+    # print(count_parameters(mlp_extractor))
+
+    # # Get the action network
+    # action_net = policy.action_net
+    # print("\nAction Network:")
+    # print(action_net)
+    # print(count_parameters(action_net))
+
+    # # Get the value network
+    # value_net = policy.value_net
+    # print("\nValue Network:")
+    # print(value_net)
+    # print(count_parameters(value_net))
+
 
     # Create the callbacks and eval env
-    eval_env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos'))
+    eval_env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='dp')
     eval_env = EnvCompatibility(eval_env, 'none')
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])
     eval_env.render_mode = "rgb_array"
 
-    
+    if DEBUG:
+        exit()
+
     # Set up callbacks
     eval_video_callback = EvalVideoCallback(eval_env, eval_freq=config['eval_every'], n_eval_episodes=config["n_eval_episodes"])
 
-    wandb_callback = WandbCallback(
-        gradient_save_freq=0,
-        model_save_path=f"wandb/{wandb.run.id}",
-        verbose=2,
-    )
+    if not DEBUG:
+        wandb_callback = WandbCallback(
+            gradient_save_freq=0,
+            model_save_path=f"wandb/{wandb.run.id}",
+            verbose=2,
+        )
+        custom_callback = CustomWandbCallback()
 
-    callback = CallbackList([eval_video_callback, wandb_callback])
+    callback = CallbackList([eval_video_callback, custom_callback])
 
     model.learn(
         total_timesteps=config["total_timesteps"],

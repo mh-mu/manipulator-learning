@@ -1,5 +1,6 @@
 <?xml version="0.0" ?>
 <robot name="rod.urdf">
+<!-- version used for peg insertion -->
 
 <link name="baseLink">
 	<visual>
@@ -7,7 +8,8 @@
     <geometry>
         <!-- this was the visual used for experiments...but it doesn't match collision, so be careful -->
 <!--      <cylinder radius="0.0125" length="0.1"/>-->
-      <cylinder radius="0.0185" length="0.1"/>
+      <!-- <cylinder radius="0.0185" length="0.1"/> -->
+      <cylinder radius="0.0195" length="0.1"/>
     </geometry>
     <material name="yellow">
         <color rgba="1 1 0 1"/>
@@ -23,8 +25,10 @@
 <!--      <cylinder radius="0.01875" length="0.1"/>-->
       <!-- tolerance: .5cm -->
 <!--      <cylinder radius="0.0175" length="0.1"/>-->
-        <!-- tolerance: .3cm -->
-      <cylinder radius="0.0185" length="0.1"/>
+      <!-- tolerance: .3cm -->
+      <!-- <cylinder radius="0.0185" length="0.1"/> -->
+      <!-- tolerance: .1cm -->
+      <cylinder radius="0.0195" length="0.1"/>
     </geometry>
   </collision>
   <inertial>
