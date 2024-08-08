@@ -662,7 +662,7 @@ class PBEnv(gym.Env):
                 init_gripper_pose = self.get_random_gripper_pose()
             else:
                 init_gripper_pose = self.init_gripper_pose
-
+            ic(self.init_gripper_random_lim, init_gripper_pose)
             if self.poses_ref_frame == 'b' and reset_dict is not None and 'pos' in reset_dict:
                 init_gripper_pose[0] = reset_dict['pos']
 
