@@ -70,22 +70,33 @@ class ThingInsertGeneric(ManipulatorEnv):
             self.env.gripper.manipulator._tool_link_ind, ref_frame_index=None)
         rod_ee_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(ee_pose_world[:3]))
         rod_box_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(box_pose[0]))
-        #reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 10 * (1 - np.tanh(10.0 * rod_box_dist))
-        reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 20 * (1 - np.tanh(10.0 * rod_box_dist))
+        reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 10 * (1 - np.tanh(10.0 * rod_box_dist))
+        #reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 20 * (1 - np.tanh(10.0 * rod_box_dist))
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
 
 class ThingInsertImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
-                 image_width=64, image_height=48, **kwargs):
-        self.action_space = spaces.Box(-1, 1, (7,), dtype=np.float32)
+                 image_width=64, image_height=48, state_data =('pos', 'grip_pos'), **kwargs):
+        self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
+        dim = 0
+        if 'pos' in state_data:
+            dim += 7
+        if 'contact_force' in state_data:
+            dim += 3
+        if 'force_torque' in state_data:
+            dim += 6
+        if 'grip_pos' in state_data:
+            dim += 2
+        if 'prev_grip_pos' in state_data:
+            dim += 4
         self.observation_space = spaces.Dict({
-            'obs': spaces.Box(-np.inf, np.inf, (9,), dtype=np.float32),
+            'obs': spaces.Box(-np.inf, np.inf, (dim,), dtype=np.float32),
             'img': spaces.Box(0, 255, (image_height, image_width, 3), dtype=np.uint8),
-            'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
+            #'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
         })
         super().__init__('insertion', True, dense_reward, 'b',
-                         state_data=('pos', 'grip_pos'),
+                         state_data=state_data,
                          max_real_time=max_real_time, n_substeps=n_substeps,
                          image_width=image_width, image_height=image_height,
                          gripper_default_close=True, pos_limits=[[.55, -.45, .64], [.9, .05, 0.8]], **kwargs)
@@ -132,14 +143,13 @@ class ThingPickAndInsertSucDoneMultiview(ThingPickAndInsertSucDoneImage):
                          **kwargs)
 
 
-
 class ThingInsertCustom(ManipulatorEnv):
     def __init__(self,
                  task,
                  camera_in_state,
                  dense_reward,
                  poses_ref_frame,
-                 init_gripper_pose=((-.15, .85, 0.75), (-.75 * np.pi, 0, np.pi/2)),
+                 init_gripper_pose=((-.25, .775, 0.68), (-.75 * np.pi, 0, np.pi/2)),
                  state_data=('pos', 'obj_pos', 'grip_feedback', 'goal_pos'),
                  max_real_time=5,
                  n_substeps=10,
@@ -199,7 +209,7 @@ class ThingInsertCustom(ManipulatorEnv):
         reward = (1 - np.tanh(10.0 * rod_box_dist))
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
-class ThingPickAndInsertSucDoneImage(ThingInsertGeneric):
+class ThingPickAndInsertSucDoneImageCustom(ThingInsertCustom):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
                  image_width=224, image_height=224, success_causes_done=True, state_data =('pos','grip_pos', 'prev_grip_pos'),  **kwargs):
         self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)

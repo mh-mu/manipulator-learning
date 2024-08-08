@@ -228,13 +228,14 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
 def main():
-    DEBUG = False
+    DEBUG = True #False
 
     config = {
         "policy_type": "MultiInputPolicy",
+        "task":'insertion', #pickandinsertion
         "algo": "PPO",
         "use_force": True,
-        "task_name":'PPO_with_force_normalized_bool_action_rew',
+        "task_name":'insertion_PPO_with_force_normalized_bool_action',
         "total_timesteps": 5e6,
         "env_name": "pb_insertion",
         "eval_every": 5e5,
@@ -253,12 +254,21 @@ def main():
             save_code=True,  # optional
         )
 
-    if config['use_force']:
-        state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
-    else:
-        state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
-    
-    env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='bool_p')
+    if config['task'] == 'insertion':
+        if config['use_force']:
+            state_data = ('pos','grip_pos','contact_force')
+        else:
+            state_data = state_data = ('pos','grip_pos')
+
+        task_name = 'ThingInsertImage'
+    elif config['task'] == 'pickandinsertion':
+        if config['use_force']:
+            state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
+        else:
+            state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
+        task_name = 'ThingPickAndInsertSucDoneImage'
+
+    env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p')
     env = EnvCompatibility(env, 'none')
     check_env(env)
     #env = DummyVecEnv([lambda: env])
@@ -306,7 +316,7 @@ def main():
     # # print(policy.critic)
 
     # Create the callbacks and eval env
-    eval_env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='bool_p')
+    eval_env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p')
     eval_env = EnvCompatibility(eval_env, 'none')
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])

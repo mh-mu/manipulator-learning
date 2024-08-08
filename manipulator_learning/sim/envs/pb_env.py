@@ -19,7 +19,7 @@ import random
 from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False
+DEBUG_GUI_ON = False #True
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
@@ -662,7 +662,7 @@ class PBEnv(gym.Env):
                 init_gripper_pose = self.get_random_gripper_pose()
             else:
                 init_gripper_pose = self.init_gripper_pose
-            ic(self.init_gripper_random_lim, init_gripper_pose)
+
             if self.poses_ref_frame == 'b' and reset_dict is not None and 'pos' in reset_dict:
                 init_gripper_pose[0] = reset_dict['pos']
 
@@ -783,7 +783,7 @@ class PBEnv(gym.Env):
                 self.insertion_rod_const = self._pb_client.createConstraint(self.gripper.body_id,
                                                  self.gripper.manipulator._tool_link_ind,
                                                  self.insertion_rod, -1, self._pb_client.JOINT_FIXED, [0, 0, 0],
-                                                 [0, 0, 0], [0, 0, 0], rod_rot, [0, 0, 0, 1])
+                                                 [0, 0, 0.0], [0, 0, 0.015], rod_rot, [0, 0, 0, 1])
                 self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
 
                 for i in range(50):
