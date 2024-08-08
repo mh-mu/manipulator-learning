@@ -16,6 +16,7 @@ from manipulator_learning.sim.utils.general import TransformMat, invert_transfor
 from manipulator_learning.sim.robots.cameras import EyeInHandCam, WorkspaceCam
 from manipulator_learning.sim.robots.manipulator_wrapper import ManipulatorWrapper, timer
 import random
+from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
 DEBUG_GUI_ON = False

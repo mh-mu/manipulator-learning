@@ -12,6 +12,7 @@ import manipulator_learning.sim.envs as manlearn_envs
 from stable_baselines3.common.evaluation import evaluate_policy
 from icecream import ic
 import cv2
+import torchvision.models as v_models
 
 import torch as th
 import torch.nn as nn
@@ -80,6 +81,61 @@ class CombinedExtractor(BaseFeaturesExtractor):
     def _get_features_dim(self):
         return self.linear.out_features
 
+
+class CustomCNN2(BaseFeaturesExtractor):
+    def __init__(self, observation_space: spaces.Dict, features_dim: int = 32):
+        super(CustomCNN2, self).__init__(observation_space, features_dim)
+        
+        n_input_channels = observation_space['img'].shape[0]
+        
+        # Define a CNN with a more gradual reduction in size and additional layers
+        self.cnn = nn.Sequential(
+            nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+        
+        # Calculate the size of the flattened output
+        with th.no_grad():
+            sample_img = observation_space.sample()['img'].astype(float) / 255.0
+            sample_img = th.as_tensor(sample_img).unsqueeze(0).float()  # Convert to float32
+            n_flatten = self.cnn(sample_img).shape[1]
+        
+        # Linear layers to gradually reduce the feature size
+        self.linear = nn.Sequential(
+            nn.Linear(n_flatten, features_dim),
+            nn.ReLU()
+        )
+
+    def forward(self, observations):
+        # Convert the image to a float32 tensor and normalize (0-1 range)
+        img = observations['img'].float() / 255.0
+        features = self.cnn(img)
+        return self.linear(features)
+
+class CombinedExtractor2(BaseFeaturesExtractor):
+    def __init__(self, observation_space, features_dim=256):
+        super(CombinedExtractor2, self).__init__(observation_space, features_dim)
+        self.img_feature_extractor = CustomCNN2(observation_space, features_dim)
+        self.obs_feature_extractor = FlattenExtractor(observation_space.spaces['obs'])
+        self.obs_linear = nn.Linear(self.obs_feature_extractor.features_dim, features_dim)
+
+        # Combine features from both extractors
+        combined_features_dim = features_dim*2
+        self.linear = nn.Linear(combined_features_dim, features_dim)
+
+    def forward(self, observations):
+        img_features = self.img_feature_extractor(observations)
+        obs_features = self.obs_linear(self.obs_feature_extractor(observations['obs']))
+        combined_features = th.cat([img_features, obs_features], dim=1)
+        return self.linear(combined_features)
+
+    def _get_features_dim(self):
+        return self.linear.out_features
 
 # Custom callback for evaluation and video recording
 class EvalVideoCallback(BaseCallback):
@@ -176,12 +232,12 @@ def main():
 
     config = {
         "policy_type": "MultiInputPolicy",
-        "algo": "SAC",
+        "algo": "PPO",
         "use_force": True,
-        "task_name":'SAC_with_force_action_space',
-        "total_timesteps": 2e6,
+        "task_name":'PPO_with_force_normalized_bool_action_rew',
+        "total_timesteps": 5e6,
         "env_name": "pb_insertion",
-        "eval_every": 5e4,
+        "eval_every": 5e5,
         "n_eval_episodes": 5,
         "video_length": 1000,
         
@@ -202,7 +258,7 @@ def main():
     else:
         state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
     
-    env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='dp')
+    env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='bool_p')
     env = EnvCompatibility(env, 'none')
     check_env(env)
     #env = DummyVecEnv([lambda: env])
@@ -219,9 +275,10 @@ def main():
         model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
     elif config['algo'] == 'TD3':
         model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
-    # model = PPO(config['policy_type'], env, verbose=1)
-    policy = model.policy
+    # # model = PPO(config['policy_type'], env, verbose=1)
+    # policy = model.policy
 
+    # # print(dir(policy))
     # # Get the feature extractor
     # feature_extractor = policy.features_extractor
     # print("Feature Extractor:")
@@ -233,7 +290,7 @@ def main():
     # print(mlp_extractor)
     # print(count_parameters(mlp_extractor))
 
-    # # Get the action network
+    # #Get the action network
     # action_net = policy.action_net
     # print("\nAction Network:")
     # print(action_net)
@@ -244,10 +301,12 @@ def main():
     # print("\nValue Network:")
     # print(value_net)
     # print(count_parameters(value_net))
-
+    # # print('*******')
+    # # print(policy.actor)
+    # # print(policy.critic)
 
     # Create the callbacks and eval env
-    eval_env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='dp')
+    eval_env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = state_data, gripper_control_method='bool_p')
     eval_env = EnvCompatibility(eval_env, 'none')
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])

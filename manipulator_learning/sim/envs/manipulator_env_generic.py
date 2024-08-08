@@ -169,7 +169,11 @@ class ManipulatorEnv(gym.Env):
         return ret_seed
 
     def step(self, action, substep_render_func=None, substep_render_delay=1):
-        action = self.action_multiplier * action
+        #action = self.action_multiplier * action
+        #Yifan: arbitrary normalization
+        scale = np.array([1/10.,1/10.,1/10.,1/5.,1/5.,1/5.,1/5.])
+        action = scale*action
+        #print(action)
         if self._precalc_substeps:
             action *= self.n_substeps
 
