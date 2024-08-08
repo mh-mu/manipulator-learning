@@ -13,12 +13,13 @@ obs = env.reset()
 
 for i in range(100):
     a = env.action_space.sample()
-    # a = np.array([-0.0,0,-0.0,0.,0,0,0.])
+    a = np.array([-1,0.,-0.0,0.,0.,0.,0.])
     # # if i < 20:
     # #     a = np.array([-0.0,0,-0.0,0.,0,0,0.1])
     # # else: 
     # #     a = np.array([-0.0,0,-0.0,0.,0,0,-0.1])
     next_obs, rew, done, info = env.step(a)
+    ic(done)
     ic(next_obs['obs'])
 
     # ic(next_obs['obs'])

@@ -228,19 +228,21 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
 def main():
-    DEBUG = True #False
+    DEBUG = False
 
     config = {
         "policy_type": "MultiInputPolicy",
         "task":'insertion', #pickandinsertion
         "algo": "PPO",
         "use_force": True,
-        "task_name":'insertion_PPO_with_force_normalized_bool_action',
+        "task_name":'insertion_PPO_reward',
         "total_timesteps": 5e6,
         "env_name": "pb_insertion",
-        "eval_every": 5e5,
+        "eval_every": 5e4,
         "n_eval_episodes": 5,
         "video_length": 1000,
+        "ee_rod_reward": 0.,
+        "rod_box_reward": 10.,
         
     }
 
@@ -268,7 +270,8 @@ def main():
             state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
         task_name = 'ThingPickAndInsertSucDoneImage'
 
-    env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p')
+    env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p',ee_rod_reward = config['ee_rod_reward'],
+        rod_box_reward = config['rod_box_reward'])
     env = EnvCompatibility(env, 'none')
     check_env(env)
     #env = DummyVecEnv([lambda: env])
@@ -316,7 +319,8 @@ def main():
     # # print(policy.critic)
 
     # Create the callbacks and eval env
-    eval_env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p')
+    eval_env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p',ee_rod_reward = config['ee_rod_reward'],
+        rod_box_reward = config['rod_box_reward'])
     eval_env = EnvCompatibility(eval_env, 'none')
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])

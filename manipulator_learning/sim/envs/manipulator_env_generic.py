@@ -84,7 +84,7 @@ class ManipulatorEnv(gym.Env):
         self.on_screen_render = False
         self.success_causes_done = success_causes_done
         self.failure_causes_done = failure_causes_done
-        self.real_t_per_ts = self.env._time_step * n_substeps
+        self.real_t_per_ts = self.env._time_step * n_substeps #(0.01 * 10)
         self._max_episode_steps = round(max_real_time / self.real_t_per_ts)
         self.n_substeps = n_substeps
         self.action_multiplier = action_multiplier

@@ -33,6 +33,8 @@ class ThingInsertGeneric(ManipulatorEnv):
                  init_rod_pos=(-.025, -.1),
                  rod_random_lim=(0.025, 0.025),
                  max_gripper_vel=0.8,
+                 ee_rod_reward=3,
+                 rod_box_reward=10,
                  **kwargs):
 
         config_dict = copy.deepcopy(DEF_CONFIG)
@@ -62,6 +64,8 @@ class ThingInsertGeneric(ManipulatorEnv):
         self.limits_cause_failure = limits_cause_failure
         self.done_success_reward = 500  # hard coded for now, may not work
         self.done_failure_reward = -5  # hard coded for now, may not work
+        self.ee_rod_reward = ee_rod_reward
+        self.rod_box_reward = rod_box_reward
 
     def _calculate_reward_and_done(self, dense_reward, limit_reached, limits_cause_failure=False):
         rod_pose = self.env._pb_client.getBasePositionAndOrientation(self.env.insertion_rod)
@@ -70,14 +74,14 @@ class ThingInsertGeneric(ManipulatorEnv):
             self.env.gripper.manipulator._tool_link_ind, ref_frame_index=None)
         rod_ee_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(ee_pose_world[:3]))
         rod_box_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(box_pose[0]))
-        reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 10 * (1 - np.tanh(10.0 * rod_box_dist))
+        reward = self.ee_rod_reward * (1 - np.tanh(10.0 * rod_ee_dist)) + self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
         #reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 20 * (1 - np.tanh(10.0 * rod_box_dist))
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
 
 class ThingInsertImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
-                 image_width=64, image_height=48, state_data =('pos', 'grip_pos'), **kwargs):
+                 image_width=224, image_height=224, state_data =('pos', 'grip_pos'), **kwargs):
         self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
         dim = 0
         if 'pos' in state_data:

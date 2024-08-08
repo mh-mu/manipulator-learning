@@ -19,7 +19,7 @@ import random
 from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False #True
+DEBUG_GUI_ON = False #True #
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
