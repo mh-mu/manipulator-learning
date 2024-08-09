@@ -19,7 +19,7 @@ import random
 from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False #True #
+DEBUG_GUI_ON = False #
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
@@ -452,10 +452,19 @@ class PBEnv(gym.Env):
         return obs_dict, reward, False, {}
 
     def _prepare_obs_dict_new(self, n_substeps=1):
+        additional_poses = []
+        for b_id in self.report_state_ids:
+            obj_world_pose = self._pb_client.getBasePositionAndOrientation(b_id)
+            additional_poses += obj_world_pose[0]
+            additional_poses += obj_world_pose[1]
+
         obs_dict = {'actual': self.gripper.receive_observation(ref_frame_pose=self.poses_ref_frame,
                                                                ref_frame_vel=self.vel_ref_frame),
                     'command': self.gripper.receive_action(),
-                    'block_poses': self._prepare_block_poses_dict(n_substeps)}
+                    'block_poses': self._prepare_block_poses_dict(n_substeps),
+                    'additional_poses': np.array(additional_poses)}
+
+
         return obs_dict
 
     def _prepare_block_poses_dict(self, n_substeps=1):
@@ -510,13 +519,13 @@ class PBEnv(gym.Env):
             rel_to_world_tq = sim_utils.TransformMat(
                 mat=sim_utils.invert_transform(trans_quat_to_mat(w_to_r_frame[:3], w_to_r_frame[3:]))).to_pb(single_tuple=True)
             rel_to_world_tq = (rel_to_world_tq[:3], rel_to_world_tq[3:])
-
         if len(self._obj_ids) > 0:  # new-style objects
             poses_dict = dict.fromkeys(range(len(self._obj_ids)))  # dict to reuse for relative positions if desired
             objs_in_state_arr = np.array(self.objs_in_state)
             obj_id_list = np.array(self._obj_ids)[objs_in_state_arr]
         else:  # old-style objects
             obj_id_list = self.block_ids
+
         for b_index, b_id in enumerate(obj_id_list):
             # need to transform positions to be relative to desired poses ref frame.
             # necessary to mimic having a sensor attached to either the tool (eye-in-hand) or the base
@@ -741,8 +750,9 @@ class PBEnv(gym.Env):
             if self.insertion_rod is not None:
                 self._pb_client.removeBody(self.insertion_rod)
             box_pos = list(copy.deepcopy(self.workspace_center))
-            box_pos[1] += 0.1
-            #Yifan: modified to have this fixed to the table
+            
+            #Yifan: modified to have this fixed to the table and close to workspace center
+            box_pos[1] += -0.15
             box_pos[2] -= 0.02
             box_pos[0] += random.uniform(-0.03, 0.03)
             box_pos[1] += random.uniform(-0.03, 0.03)
@@ -773,6 +783,8 @@ class PBEnv(gym.Env):
             self.insertion_rod = self._pb_client.loadURDF(self.object_urdf_root + rod_file,
                                                           [rod_xy[0], rod_xy[1], rod_z], [0, 0, 0, 1])
             rod_rot = convert_quat_tf_to_pb(tf3d.euler.euler2quat(.75 * np.pi, 0, 0))
+            # yifan: add rod and box so that their poses can be reported
+            self.report_state_ids = [self.insertion_rod, self.insertion_box]
 
             if self.task == 'insertion':
                 for i in range(50):
@@ -783,7 +795,7 @@ class PBEnv(gym.Env):
                 self.insertion_rod_const = self._pb_client.createConstraint(self.gripper.body_id,
                                                  self.gripper.manipulator._tool_link_ind,
                                                  self.insertion_rod, -1, self._pb_client.JOINT_FIXED, [0, 0, 0],
-                                                 [0, 0, 0.0], [0, 0, 0.015], rod_rot, [0, 0, 0, 1])
+                                                 [0, 0, 0.0], [0, 0, 0.055], rod_rot, [0, 0, 0, 1])
                 self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
 
                 for i in range(50):

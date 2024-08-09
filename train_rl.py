@@ -231,11 +231,12 @@ def main():
     DEBUG = False
 
     config = {
-        "policy_type": "MultiInputPolicy",
+        "policy_type": "MultiInputPolicy", #"MlpPolicy", # 
         "task":'insertion', #pickandinsertion
+        "use_image": False,
         "algo": "PPO",
         "use_force": True,
-        "task_name":'insertion_PPO_reward',
+        "task_name":'insertion_PPO_dist_reward_easy_P_withForce',
         "total_timesteps": 5e6,
         "env_name": "pb_insertion",
         "eval_every": 5e4,
@@ -256,19 +257,25 @@ def main():
             save_code=True,  # optional
         )
 
-    if config['task'] == 'insertion':
+    if config['use_image']:
+        if config['task'] == 'insertion':
+            if config['use_force']:
+                state_data = ('pos','grip_pos','contact_force')
+            else:
+                state_data = state_data = ('pos','grip_pos')
+            task_name = 'ThingInsertImage'
+        elif config['task'] == 'pickandinsertion':
+            if config['use_force']:
+                state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
+            else:
+                state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
+            task_name = 'ThingPickAndInsertSucDoneImage'
+    else:
+        task_name = 'ThingInsertGT'
         if config['use_force']:
-            state_data = ('pos','grip_pos','contact_force')
+            state_data = ('pos','grip_pos', 'obj_pose', 'contact_force')
         else:
-            state_data = state_data = ('pos','grip_pos')
-
-        task_name = 'ThingInsertImage'
-    elif config['task'] == 'pickandinsertion':
-        if config['use_force']:
-            state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
-        else:
-            state_data = state_data = ('pos','grip_pos', 'prev_grip_pos')
-        task_name = 'ThingPickAndInsertSucDoneImage'
+            state_data = state_data = state_data = ('pos','grip_pos', 'obj_pose')
 
     env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p',ee_rod_reward = config['ee_rod_reward'],
         rod_box_reward = config['rod_box_reward'])
@@ -280,15 +287,20 @@ def main():
         features_extractor_class=CombinedExtractor
     )
     #model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-    if config['algo'] == "PPO":
-        model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-    elif config['algo'] == "SAC":
-        model = SAC(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
-    elif config['algo'] == "RecurrentPPO":
-        model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-    elif config['algo'] == 'TD3':
-        model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+    if config['use_image']:
+        if config['algo'] == "PPO":
+            model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+        elif config['algo'] == "SAC":
+            model = SAC(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+        elif config['algo'] == "RecurrentPPO":
+            model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+        elif config['algo'] == 'TD3':
+            model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+    else:
+        model = PPO(config['policy_type'], env, verbose=1)
+    
     # # model = PPO(config['policy_type'], env, verbose=1)
+
     # policy = model.policy
 
     # # print(dir(policy))

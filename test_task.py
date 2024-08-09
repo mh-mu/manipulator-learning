@@ -7,22 +7,21 @@ import matplotlib.pyplot as plt
 #env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos','force_torque'))
 #env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImage')(state_data = ('pos','grip_pos', 'prev_grip_pos'))
 #env = getattr(manlearn_envs, 'ThingPickAndInsertSucDoneImageCustom')(state_data = ('pos','contact_force'), gripper_control_method='dp')
-env = getattr(manlearn_envs, 'ThingInsertImage')(state_data = ('pos','grip_pos','contact_force'))
+env = getattr(manlearn_envs, 'ThingInsertGT')(state_data = ('pos','obj_pose', 'contact_force')) #, render_opengl_gui=True, force_pb_direct=False)
 
 obs = env.reset()
 
 for i in range(100):
     a = env.action_space.sample()
-    a = np.array([-1,0.,-0.0,0.,0.,0.,0.])
+    a = np.array([0, 0.,-0.1,0.,0.,0.,-1])
     # # if i < 20:
     # #     a = np.array([-0.0,0,-0.0,0.,0,0,0.1])
     # # else: 
     # #     a = np.array([-0.0,0,-0.0,0.,0,0,-0.1])
     next_obs, rew, done, info = env.step(a)
-    ic(done)
-    ic(next_obs['obs'])
+    ic(rew)
 
-    # ic(next_obs['obs'])
+    ic(next_obs)
     #ic(next_obs['img'].shape)
 
     #image_array = next_obs['img']

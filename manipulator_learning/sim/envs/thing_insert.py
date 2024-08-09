@@ -6,6 +6,7 @@ from gymnasium import spaces
 from manipulator_learning.sim.envs.manipulator_env_generic import ManipulatorEnv
 from manipulator_learning.sim.envs.configs.thing_default import TWO_FINGER_CONFIG as DEF_CONFIG
 from manipulator_learning.sim.envs.rewards.generic import get_done_suc_fail
+from icecream import ic
 
 class ThingInsertGeneric(ManipulatorEnv):
     def __init__(self,
@@ -13,7 +14,7 @@ class ThingInsertGeneric(ManipulatorEnv):
                  camera_in_state,
                  dense_reward,
                  poses_ref_frame,
-                 init_gripper_pose=((-.15, .85, 0.75), (-.75 * np.pi, 0, np.pi/2)),
+                 init_gripper_pose=((-.15, .85, 0.8), (-.75 * np.pi, 0, np.pi/2)),#=((-.15, .85, 0.75), (-.75 * np.pi, 0, np.pi/2)),
                  state_data=('pos', 'obj_pos', 'grip_feedback', 'goal_pos'),
                  max_real_time=5,
                  n_substeps=10,
@@ -74,8 +75,8 @@ class ThingInsertGeneric(ManipulatorEnv):
             self.env.gripper.manipulator._tool_link_ind, ref_frame_index=None)
         rod_ee_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(ee_pose_world[:3]))
         rod_box_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(box_pose[0]))
-        reward = self.ee_rod_reward * (1 - np.tanh(10.0 * rod_ee_dist)) + self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
-        #reward = 3 * (1 - np.tanh(10.0 * rod_ee_dist)) + 20 * (1 - np.tanh(10.0 * rod_box_dist))
+        #reward = self.ee_rod_reward * (1 - np.tanh(10.0 * rod_ee_dist)) + self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
+        reward = -rod_box_dist - rod_ee_dist
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
 
@@ -103,7 +104,33 @@ class ThingInsertImage(ThingInsertGeneric):
                          state_data=state_data,
                          max_real_time=max_real_time, n_substeps=n_substeps,
                          image_width=image_width, image_height=image_height,
-                         gripper_default_close=True, pos_limits=[[.55, -.45, .64], [.9, .05, 0.8]], **kwargs)
+                         gripper_default_close=True, pos_limits=[[.55, -.45, .64], [.9, .05, 0.85]], **kwargs)
+
+class ThingInsertGT(ThingInsertGeneric):
+    def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
+                 image_width=224, image_height=224, state_data =('pos', 'grip_pos'), **kwargs):
+        self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
+        dim = 0
+        if 'pos' in state_data:
+            dim += 7
+        if 'obj_pose' in state_data:
+            dim += 14
+        if 'contact_force' in state_data:
+            dim += 3
+        if 'force_torque' in state_data:
+            dim += 6
+        if 'grip_pos' in state_data:
+            dim += 2
+        if 'prev_grip_pos' in state_data:
+            dim += 4
+        self.observation_space = spaces.Dict({
+            'obs': spaces.Box(-np.inf, np.inf, (dim,), dtype=np.float32),
+        })
+        super().__init__('insertion', False, dense_reward, 'b',
+                         state_data=state_data,
+                         max_real_time=max_real_time, n_substeps=n_substeps,
+                         gripper_default_close=True, pos_limits=[[.55, -.45, .64], [.9, .05, 0.85]], **kwargs)
+
 
 
 class ThingInsertMultiview(ThingInsertImage):

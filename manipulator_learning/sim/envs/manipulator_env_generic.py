@@ -171,6 +171,7 @@ class ManipulatorEnv(gym.Env):
     def step(self, action, substep_render_func=None, substep_render_delay=1):
         #action = self.action_multiplier * action
         #Yifan: arbitrary normalization
+        action[-1] = -1.
         scale = np.array([1/10.,1/10.,1/10.,1/5.,1/5.,1/5.,1/5.])
         action = scale*action
         #print(action)
@@ -404,6 +405,7 @@ class ManipulatorEnv(gym.Env):
             ft_env[3:] = np.tanh(ft_raw[3:] / 10)
             return_obs['force_torque'] = ft_env
 
+
         # for rewards that need it
         if len(self.env.block_ids) > 0 and 'door' not in self.task:
             info_dict['obj_pos_world'] = self.env._pb_client.getBasePositionAndOrientation(self.env.block_ids[0])
@@ -478,8 +480,10 @@ class ManipulatorEnv(gym.Env):
             return_arr.append(return_obs[k].flatten())
             if k in PROPRIOCEPTIVE_STATES:
                 img_env_obs.append(return_obs[k].flatten())
+        if 'obj_pose' in self.state_data:
+            return_arr.append(obs_dict['additional_poses'])
         return_arr = np.concatenate(return_arr).astype(np.float32)
-
+        
         # add info dict to return_obs dict after return_arr has already been generated
         info_dict['img_env_state'] = np.concatenate(img_env_obs)
         for k in info_dict:
@@ -494,7 +498,10 @@ class ManipulatorEnv(gym.Env):
                 img=rgb,
                 #depth=depth
             )
-
+        else:
+            return_arr = dict(
+                obs=return_arr,
+            )
         self._return_arr = return_arr
         self._return_obs = return_obs
         return return_arr, return_obs
