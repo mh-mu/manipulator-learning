@@ -171,7 +171,7 @@ class ManipulatorEnv(gym.Env):
     def step(self, action, substep_render_func=None, substep_render_delay=1):
         #action = self.action_multiplier * action
         #Yifan: arbitrary normalization
-        action[-1] = -1.
+        action = np.concatenate((action,np.array([-1])))
         scale = np.array([1/10.,1/10.,1/10.,1/5.,1/5.,1/5.,1/5.])
         action = scale*action
         #print(action)

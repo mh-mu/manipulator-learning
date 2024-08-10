@@ -236,7 +236,7 @@ def main():
         "use_image": False,
         "algo": "PPO",
         "use_force": True,
-        "task_name":'insertion_PPO_dist_reward_easy_P_withForce',
+        "task_name":'insertion_PPO_P_withForce',
         "total_timesteps": 5e6,
         "env_name": "pb_insertion",
         "eval_every": 5e4,

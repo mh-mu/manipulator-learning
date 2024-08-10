@@ -76,7 +76,8 @@ class ThingInsertGeneric(ManipulatorEnv):
         rod_ee_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(ee_pose_world[:3]))
         rod_box_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(box_pose[0]))
         #reward = self.ee_rod_reward * (1 - np.tanh(10.0 * rod_ee_dist)) + self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
-        reward = -rod_box_dist - rod_ee_dist
+        #reward = -rod_box_dist - rod_ee_dist
+        reward = self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
 
@@ -109,7 +110,7 @@ class ThingInsertImage(ThingInsertGeneric):
 class ThingInsertGT(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
                  image_width=224, image_height=224, state_data =('pos', 'grip_pos'), **kwargs):
-        self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
+        self.action_space = spaces.Box(-1., 1., (6,), dtype=np.float32)
         dim = 0
         if 'pos' in state_data:
             dim += 7
