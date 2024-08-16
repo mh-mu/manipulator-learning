@@ -19,7 +19,7 @@ import random
 from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False #
+DEBUG_GUI_ON = False #True #
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
@@ -791,12 +791,13 @@ class PBEnv(gym.Env):
                     self.gripper.manipulator.open_gripper()
                     self.gripper.manipulator.update()
                     self._pb_client.stepSimulation()
-
+                #yifan: keep the rod attached to the gripper
                 self.insertion_rod_const = self._pb_client.createConstraint(self.gripper.body_id,
                                                  self.gripper.manipulator._tool_link_ind,
                                                  self.insertion_rod, -1, self._pb_client.JOINT_FIXED, [0, 0, 0],
-                                                 [0, 0, 0.0], [0, 0, 0.055], rod_rot, [0, 0, 0, 1])
-                self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
+                                                 [0, 0, 0.0], [0, 0, 0.075], rod_rot, [0, 0, 0, 1])
+                self._pb_client.changeConstraint(self.insertion_rod_const) #, maxForce=100)
+                # self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
 
                 for i in range(50):
                     self._pb_client.stepSimulation()
@@ -806,7 +807,7 @@ class PBEnv(gym.Env):
                     self.gripper.manipulator.update()
                     self._pb_client.stepSimulation()
 
-                self._pb_client.removeConstraint(self.insertion_rod_const)
+                #self._pb_client.removeConstraint(self.insertion_rod_const)
 
         # new style object loading -- still needs a way to specify initial orientation of objects:
         if self.obj_init_pos is not None:

@@ -58,7 +58,7 @@ class ThingInsertGeneric(ManipulatorEnv):
                          image_width=image_width, image_height=image_height,
                          failure_causes_done=failure_causes_done, success_causes_done=success_causes_done,
                          control_frame=control_frame, config_dict=config_dict, **kwargs)
-        self.reach_radius = .0015
+        self.reach_radius = 0.005 #.0015
         self.reach_radius_time = .01
         self.reach_radius_start_time = None
         self.in_reach_radius = False
@@ -84,7 +84,8 @@ class ThingInsertGeneric(ManipulatorEnv):
 class ThingInsertImage(ThingInsertGeneric):
     def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
                  image_width=224, image_height=224, state_data =('pos', 'grip_pos'), **kwargs):
-        self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
+        #self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
+        self.action_space = spaces.Box(-1., 1., (6,), dtype=np.float32)
         dim = 0
         if 'pos' in state_data:
             dim += 7

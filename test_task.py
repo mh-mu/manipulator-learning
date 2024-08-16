@@ -13,7 +13,8 @@ obs = env.reset()
 
 for i in range(100):
     a = env.action_space.sample()
-    a = np.array([0, 0.,-0.1,0.,0.,0.,-1])
+    #a = np.zeros(6)
+    a = np.array([0, 0.,-0.1,0.,0.,0.]) #,-1])
     # # if i < 20:
     # #     a = np.array([-0.0,0,-0.0,0.,0,0,0.1])
     # # else: 

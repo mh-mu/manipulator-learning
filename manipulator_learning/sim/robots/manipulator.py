@@ -396,12 +396,17 @@ class Manipulator:
         """
         if not gripper_only:
             args = [self._arm[0]]
+            #Yifan: weaker robot arm
+            forces = [200,200,200,100,100,60]
             for i in range(self._num_jnt_arm):
+                # kwargs = dict(jointIndex=self._active_ind[i], controlMode=self._pb_client.POSITION_CONTROL,
+                #               targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity,
+                #             #   positionGain=500, velocityGain=50)
                 kwargs = dict(jointIndex=self._active_ind[i], controlMode=self._pb_client.POSITION_CONTROL,
-                              targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity, force=1000)#,
+                              targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity, force=forces[i])#,
                             #   positionGain=500, velocityGain=50)
-                if self.pos_ctrl_max_arm_force is not None:
-                    kwargs['force'] = self.pos_ctrl_max_arm_force
+                # if self.pos_ctrl_max_arm_force is not None:
+                #     kwargs['force'] = self.pos_ctrl_max_arm_force
                 self._pb_client.setJointMotorControl2(*args, **kwargs)
 
         # enforce max velocity for gripper joints

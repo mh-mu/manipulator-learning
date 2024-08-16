@@ -221,7 +221,7 @@
         <mesh filename="assets/ridgeback_description/meshes/body.stl"/>
       </geometry>
       <material name="black"/>
-    </visual> -->
+    </visual> 
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>

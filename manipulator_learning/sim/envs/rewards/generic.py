@@ -1,5 +1,5 @@
 import numpy as np
-
+from icecream import ic
 
 def hold_timer(suc_bool, ep_timesteps, real_t_per_ts, min_time, start_time):
     """ Get result of a timer to decide whether a success reward criteria has been met for long enough """
@@ -40,7 +40,6 @@ def get_done_suc_fail(dist, reward, limit_reached, dense_reward, env_obj):
     if env_obj.limits_cause_failure and limit_reached:
         done_success = False
         done_failure = True
-
     if env_obj.success_causes_done and done_success:
         reward = env_obj.done_success_reward
     if env_obj.failure_causes_done and done_failure:

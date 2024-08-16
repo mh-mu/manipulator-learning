@@ -19,6 +19,8 @@ import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.torch_layers import FlattenExtractor
 from gym import spaces
+from cprint import *
+
 
 class CustomCNN(BaseFeaturesExtractor):
     def __init__(self, observation_space: spaces.Dict, features_dim: int = 32):
@@ -233,18 +235,20 @@ def main():
     config = {
         "policy_type": "MultiInputPolicy", #"MlpPolicy", # 
         "task":'insertion', #pickandinsertion
-        "use_image": False,
+        "use_image": True,
         "algo": "PPO",
-        "use_force": True,
-        "task_name":'insertion_PPO_P_withForce',
-        "total_timesteps": 5e6,
+        "use_force": False,
+        "task_name":'insertion_PPO_noForce_smallTol_fixed_weak',
+        "total_timesteps": 5e7,
         "env_name": "pb_insertion",
-        "eval_every": 5e4,
+        "eval_every": 1e6,
         "n_eval_episodes": 5,
         "video_length": 1000,
         "ee_rod_reward": 0.,
         "rod_box_reward": 10.,
-        
+        "max_real_time":20.,
+        "n_substeps":2,
+        "model_path": None, # "wandb/run-20240811_234010-7m8mddop/files/best_model.zip",
     }
 
     if not DEBUG:
@@ -278,7 +282,8 @@ def main():
             state_data = state_data = state_data = ('pos','grip_pos', 'obj_pose')
 
     env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p',ee_rod_reward = config['ee_rod_reward'],
-        rod_box_reward = config['rod_box_reward'])
+        rod_box_reward = config['rod_box_reward'], max_real_time=config['max_real_time'],\
+        n_substeps=config['n_substeps'], success_causes_done = True)
     env = EnvCompatibility(env, 'none')
     check_env(env)
     #env = DummyVecEnv([lambda: env])
@@ -287,17 +292,23 @@ def main():
         features_extractor_class=CombinedExtractor
     )
     #model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-    if config['use_image']:
-        if config['algo'] == "PPO":
-            model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-        elif config['algo'] == "SAC":
-            model = SAC(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
-        elif config['algo'] == "RecurrentPPO":
-            model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
-        elif config['algo'] == 'TD3':
-            model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+    if config['model_path'] is not None:
+        model = PPO.load(config['model_path'])
+        cprint.info('Trained model loaded')
+        model.set_env(env)
     else:
-        model = PPO(config['policy_type'], env, verbose=1)
+        if config['use_image']:
+            if config['algo'] == "PPO":
+                model = PPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+            elif config['algo'] == "SAC":
+                model = SAC(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+            elif config['algo'] == "RecurrentPPO":
+                model = RecurrentPPO(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1)
+            elif config['algo'] == 'TD3':
+                model = TD3(config['policy_type'], env, policy_kwargs=policy_kwargs, verbose=1, buffer_size = 100000)
+        else:
+            model = PPO(config['policy_type'], env, verbose=1)
+    
     
     # # model = PPO(config['policy_type'], env, verbose=1)
 
@@ -332,7 +343,8 @@ def main():
 
     # Create the callbacks and eval env
     eval_env = getattr(manlearn_envs, task_name)(state_data = state_data, gripper_control_method='bool_p',ee_rod_reward = config['ee_rod_reward'],
-        rod_box_reward = config['rod_box_reward'])
+        rod_box_reward = config['rod_box_reward'],max_real_time=config['max_real_time'],\
+        n_substeps=config['n_substeps'], success_causes_done = True)
     eval_env = EnvCompatibility(eval_env, 'none')
     check_env(eval_env)
     #eval_env = DummyVecEnv([lambda: eval_env])
