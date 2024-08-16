@@ -247,7 +247,7 @@ def main():
         "ee_rod_reward": 0.,
         "rod_box_reward": 10.,
         "max_real_time":20.,
-        "n_substeps":2,
+        "n_substeps":10,
         "model_path": None, # "wandb/run-20240811_234010-7m8mddop/files/best_model.zip",
     }
 

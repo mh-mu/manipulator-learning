@@ -19,7 +19,7 @@ import random
 from icecream import ic
 
 SHOW_PB_FRAME_MARKERS = False
-DEBUG_GUI_ON = False #True #
+DEBUG_GUI_ON = False # True #
 
 class PBEnv(gym.Env):
     """ Create a pybullet env. Although this inherits gym.Env, it shouldn't be used on its own, but rather as
@@ -67,7 +67,7 @@ class PBEnv(gym.Env):
             render_opengl_gui=False,  # pybullet opengl gui shown or not
             render_ground_plane=True,  # render ground plane in pybullet
             use_egl=True,  # egl renderer in pybullet
-            time_step=0.01,  # used by pybullet as real time per pybullet step, .01 should be maximum
+            time_step=0.002,  # used by pybullet as real time per pybullet step, .01 should be maximum
             renderer='opengl',  # camera renderer, 'opengl' for gpu or anything else for cpu
 
             force_pb_direct=False,  # make pybullet use direct mode
@@ -803,7 +803,7 @@ class PBEnv(gym.Env):
                     self._pb_client.stepSimulation()
 
                 for i in range(100):
-                    self.gripper.manipulator.close_gripper()
+                    self.gripper.manipulator.open_gripper()
                     self.gripper.manipulator.update()
                     self._pb_client.stepSimulation()
 

@@ -397,7 +397,7 @@ class Manipulator:
         if not gripper_only:
             args = [self._arm[0]]
             #Yifan: weaker robot arm
-            forces = [200,200,200,100,100,60]
+            forces = np.array([200,200,200,100,100,60])*1
             for i in range(self._num_jnt_arm):
                 # kwargs = dict(jointIndex=self._active_ind[i], controlMode=self._pb_client.POSITION_CONTROL,
                 #               targetPosition=cmd[i], maxVelocity=self.pos_control_max_velocity,
@@ -408,7 +408,6 @@ class Manipulator:
                 # if self.pos_ctrl_max_arm_force is not None:
                 #     kwargs['force'] = self.pos_ctrl_max_arm_force
                 self._pb_client.setJointMotorControl2(*args, **kwargs)
-
         # enforce max velocity for gripper joints
         if not arm_only:
             for i in range(1, self._num_jnt_gripper + 1):
