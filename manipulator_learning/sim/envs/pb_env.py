@@ -796,8 +796,8 @@ class PBEnv(gym.Env):
                                                  self.gripper.manipulator._tool_link_ind,
                                                  self.insertion_rod, -1, self._pb_client.JOINT_FIXED, [0, 0, 0],
                                                  [0, 0, 0.0], [0, 0, 0.075], rod_rot, [0, 0, 0, 1])
-                self._pb_client.changeConstraint(self.insertion_rod_const) #, maxForce=100)
-                # self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
+                #self._pb_client.changeConstraint(self.insertion_rod_const) #, maxForce=100)
+                self._pb_client.changeConstraint(self.insertion_rod_const, maxForce=10)
 
                 for i in range(50):
                     self._pb_client.stepSimulation()
@@ -807,7 +807,7 @@ class PBEnv(gym.Env):
                     self.gripper.manipulator.update()
                     self._pb_client.stepSimulation()
 
-                #self._pb_client.removeConstraint(self.insertion_rod_const)
+                self._pb_client.removeConstraint(self.insertion_rod_const)
 
         # new style object loading -- still needs a way to specify initial orientation of objects:
         if self.obj_init_pos is not None:
