@@ -8,6 +8,8 @@ from manipulator_learning.learning.imitation.collect_utils import *
 import manipulator_learning.learning.data.img_depth_dataset as img_depth_dataset
 from manipulator_learning.learning.utils.absorbing_state import Mask
 
+from icecream import ic
+# import gymnasium as gym
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--environment', type=str, default="ThingReachingXYState")
