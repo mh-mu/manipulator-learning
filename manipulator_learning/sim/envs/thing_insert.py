@@ -77,7 +77,7 @@ class ThingInsertGeneric(ManipulatorEnv):
         rod_box_dist = np.linalg.norm(np.array(rod_pose[0]) - np.array(box_pose[0]))
         #reward = self.ee_rod_reward * (1 - np.tanh(10.0 * rod_ee_dist)) + self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
         #reward = -rod_box_dist - rod_ee_dist
-        reward = self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist))
+        reward = self.rod_box_reward * (1 - np.tanh(10.0 * rod_box_dist)) - 10. #penalize for longer time
         return get_done_suc_fail(rod_box_dist, reward, limit_reached, dense_reward, self)
 
 
