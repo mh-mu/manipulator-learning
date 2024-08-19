@@ -5,3 +5,4 @@ wandb/
 *.pyc
 *.egg-info
 *.png
+/.vscode
