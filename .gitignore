@@ -6,3 +6,4 @@ wandb/
 *.egg-info
 *.png
 /.vscode
+demonstrations/

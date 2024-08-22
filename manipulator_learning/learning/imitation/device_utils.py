@@ -101,6 +101,7 @@ class CollectDevice:
 
     def __init__(self, device, valid_t_dof=(1, 1, 1), valid_r_dof=(1, 1, 1), output_grip=True,
                  action_multiplier=1.0, des_forward_axis=(0, 0, 1), des_up_axis=(0, -1, 0)):
+        print('-----------------collect device initialized')
         self.dev_type = device
         self.dev = self.initialize_device(device, des_forward_axis, des_up_axis)
         self.recording = False

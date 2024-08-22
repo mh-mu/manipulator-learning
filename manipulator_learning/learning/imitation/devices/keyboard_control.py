@@ -1,9 +1,8 @@
-# Contains classes and methods for allowing control with a gamepad.
-
 from pynput import keyboard
 import time
 import numpy as np
 import transforms3d as tf3d
+import icecream as ic
 
 keyboard_event_dict = {
     'w': 'w',
@@ -55,19 +54,37 @@ class KeyboardSteer:
         self.listener.start()
 
     def _on_press(self, key):
-        try:
-            key_str = key.char
-        except AttributeError:
-            key_str = key.name
+        if key == keyboard.Key.space:
+            key_str = 'space'
+        elif key == keyboard.Key.enter:
+            key_str = 'enter'
+        elif key == keyboard.Key.backspace:
+            key_str = 'backspace'
+        elif key == keyboard.Key.shift_r:
+            key_str = 'right shift'
+        else:
+            try:
+                key_str = key.char
+            except AttributeError:
+                key_str = key.name
 
         if key_str in keyboard_event_dict:
             self.btn_state[keyboard_event_dict[key_str]] = True
 
     def _on_release(self, key):
-        try:
-            key_str = key.char
-        except AttributeError:
-            key_str = key.name
+        if key == keyboard.Key.space:
+            key_str = 'space'
+        elif key == keyboard.Key.enter:
+            key_str = 'enter'
+        elif key == keyboard.Key.backspace:
+            key_str = 'backspace'
+        elif key == keyboard.Key.shift_r:
+            key_str = 'right shift'
+        else:
+            try:
+                key_str = key.char
+            except AttributeError:
+                key_str = key.name
 
         if key_str in keyboard_event_dict:
             self.btn_state[keyboard_event_dict[key_str]] = False
@@ -115,6 +132,7 @@ class KeyboardSteer:
             self.d_pressed = True
 
         if self.btn_state['r_shift'] and not self.old_btn_state['r_shift']:
+            ic('r_shift pressed')
             self.gripper_toggle = not self.gripper_toggle
 
         if self.btn_state['s'] and not self.old_btn_state['s']:
@@ -128,7 +146,6 @@ class KeyboardSteer:
         else:
             self.enter_hold = False
 
-
 if __name__ == '__main__':
     ks = KeyboardSteer()
 
@@ -141,4 +158,3 @@ if __name__ == '__main__':
             time.sleep(.1)
     except KeyboardInterrupt:
         print("Program interrupted. Exiting...")
-
