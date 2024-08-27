@@ -513,7 +513,6 @@ class ManipulatorEnv(gym.Env):
         self.window.destroy()
 
     def render(self, mode='human', substep_render=False):
-
         if not self.img_rendered or substep_render:  # ensures only one render per step
             if self._new_env_with_fixed_depth:
                 self.rgb, self.depth = self.env.render('workspace', depth_type='fixed', substep_render=substep_render)

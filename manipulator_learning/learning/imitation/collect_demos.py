@@ -93,7 +93,10 @@ obs = env.reset()
 while(True):
     frame_start = time.time()
 
-    cancel, save, start, reset, delete, success_fb_suc, success_fb_fail = dev.update_and_get_state()
+    cancel, _, start, _, delete, success_fb_suc, success_fb_fail = dev.update_and_get_state()
+
+    # mei
+    save = False
     
     if delete:
         print('Deleting previous trajectory')
@@ -115,6 +118,10 @@ while(True):
         act = dev.get_ee_pos_action(None, None)
 
     next_obs, rew, done, info = env.step(act)
+    save = done # save when an episode is done
+
+    # mei
+    dev.recording = True
 
     if dev.recording:
         ep_r += rew
@@ -164,11 +171,12 @@ while(True):
             # traj_data.append(np.concatenate([
             #     next_obs['obs'], np.zeros_like(act).flatten(), np.array([0]), np.array([done_mask]), np.array([done])
             # ]))
-            traj_data.append(np.concatenate([
-                next_obs['obs'], np.zeros_like(act).flatten()]))
-            img_traj_data.append(next_obs['img'])
+            # traj_data.append(np.concatenate([
+            #     next_obs['obs'], np.zeros_like(act).flatten()]))
+            # img_traj_data.append(next_obs['img'])
 
-            ds.append_traj_data_lists(traj_data, img_traj_data, final_obs_included=True)
+            # ds.append_traj_data_lists(traj_data, img_traj_data, final_obs_included=True)
+            ds.append_traj_data_lists(traj_data, img_traj_data, final_obs_included=False)
         else:
             data.append(np.array(traj_data))
             traj_lens.append(ts)
@@ -179,12 +187,13 @@ while(True):
             else:
                 np.save(np_filename, np.concatenate([old_data, np.vstack(data)]))
                 np.save(traj_lens_filename, np.vstack(traj_lens))
-        dev.recording = False
+        # dev.recording = False # mei
         traj_data = []
         if obs_is_dict:
             img_traj_data = []
 
-    if reset or done:
+    # if reset or done:
+    if done:
         if args.device == 'vr':
             dev.dev.reset_ref_poses()
         print('Episode reward: %4.3f' % ep_r)
