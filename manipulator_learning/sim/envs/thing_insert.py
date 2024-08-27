@@ -16,7 +16,7 @@ class ThingInsertGeneric(ManipulatorEnv):
                  poses_ref_frame,
                  init_gripper_pose=((-.15, .85, 0.8), (-.75 * np.pi, 0, np.pi/2)),#=((-.15, .85, 0.75), (-.75 * np.pi, 0, np.pi/2)),
                  state_data=('pos', 'obj_pos', 'grip_feedback', 'goal_pos'),
-                 max_real_time=5,
+                 max_real_time=20,
                  n_substeps=10,
                  gap_between_prev_pos=.2,
                  image_width=160,
@@ -58,7 +58,7 @@ class ThingInsertGeneric(ManipulatorEnv):
                          image_width=image_width, image_height=image_height,
                          failure_causes_done=failure_causes_done, success_causes_done=success_causes_done,
                          control_frame=control_frame, config_dict=config_dict, **kwargs)
-        self.reach_radius = 0.005 #.0015
+        self.reach_radius = 0.01 #0.005 #.0015
         self.reach_radius_time = .01
         self.reach_radius_start_time = None
         self.in_reach_radius = False
@@ -82,7 +82,7 @@ class ThingInsertGeneric(ManipulatorEnv):
 
 
 class ThingInsertImage(ThingInsertGeneric):
-    def __init__(self, max_real_time=10, n_substeps=10, dense_reward=True,
+    def __init__(self, max_real_time=20, n_substeps=10, dense_reward=True,
                  image_width=224, image_height=224, state_data =('pos', 'grip_pos'), **kwargs):
         #self.action_space = spaces.Box(-1., 1., (7,), dtype=np.float32)
         self.action_space = spaces.Box(-1., 1., (6,), dtype=np.float32)

@@ -25,7 +25,7 @@ class ManipulatorEnv(gym.Env):
                  num_prev_pos=5,
                  num_prev_grip_pos=2,  # excluding current grip pos
                  gap_between_prev_pos=.1,  # in seconds
-                 max_real_time=5,  # in seconds
+                 max_real_time=5, # in seconds
                  n_substeps=10,  # number of sim frames to execute action for.. all sim timesteps are .01s
                  action_multiplier=1.0,
                  image_width=160,
@@ -172,7 +172,7 @@ class ManipulatorEnv(gym.Env):
         #action = self.action_multiplier * action
         #Yifan: arbitrary normalization
         scale = np.array([1/10.,1/10.,1/10.,1/5.,1/5.,1/5.,1/5.])
-        action = scale*action
+        action = (scale*action).flatten()
         #print(action)
         if self._precalc_substeps:
             action *= self.n_substeps
@@ -513,6 +513,7 @@ class ManipulatorEnv(gym.Env):
         self.window.destroy()
 
     def render(self, mode='human', substep_render=False):
+
         if not self.img_rendered or substep_render:  # ensures only one render per step
             if self._new_env_with_fixed_depth:
                 self.rgb, self.depth = self.env.render('workspace', depth_type='fixed', substep_render=substep_render)
@@ -594,11 +595,12 @@ class ManipulatorEnv(gym.Env):
 
 if __name__ == '__main__':
     import time
-    from manipulator_learning.sim.envs.thing_reaching import ThingReachingXYState
+    from manipulator_learning.sim.envs.thing_insert import ThingInsertImage
 
     # env = ThingEnv('reaching_xy', 'thing_2_finger', True, False, False)
-    env = ThingReachingXYState()
-    # env = ThingEnv('pushing_xy', 'thing_rod', True, False, False)
+    # env = ThingReachingXYState()
+    state_data = ('pos','grip_pos', 'prev_grip_pos','contact_force')
+    env = ThingInsertImage(state_data=state_data)
     obs = env.reset()
 
     # from manipulator_learning.sim.utils.gamepad_control import GamepadSteer
@@ -622,7 +624,7 @@ if __name__ == '__main__':
         ks.process_events()
         mult = .3
         t_vel = mult * np.array([ks.btn_state['d'] - ks.btn_state['a'],
-                 ks.btn_state['w'] - ks.btn_state['s']])
+                 ks.btn_state['w'] - ks.btn_state['s'], 0, 0, 0, 0, 0])
         # grip = ks.btn_state['space']
         env.step([t_vel])
         if ks.btn_state['d'] > 0:

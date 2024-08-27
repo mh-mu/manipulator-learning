@@ -146,7 +146,7 @@ class EvalVideoCallback(BaseCallback):
         self.eval_env = eval_env
         self.eval_freq = eval_freq
         self.n_eval_episodes = n_eval_episodes
-        self.best_mean_reward = -np.inf
+        self.best_mean_jl = -np.inf
         self.last_mean_reward = -np.inf
 
     def _on_step(self):

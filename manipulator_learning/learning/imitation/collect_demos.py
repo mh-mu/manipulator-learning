@@ -42,12 +42,12 @@ if args.device == 'vr':
 
 # handle images in obs
 obs_is_dict = False
-ic(env.observation_space)
 if type(env.observation_space) == gym.spaces.dict.Dict:
     obs_is_dict = True
     img_traj_data = []
 
 env.seed()
+ic(obs_is_dict)
 
 data_dir = os.path.join(args.directory, args.demo_name)
 
@@ -164,8 +164,6 @@ while(True):
             # traj_data.append(np.concatenate([
             #     next_obs['obs'], np.zeros_like(act).flatten(), np.array([0]), np.array([done_mask]), np.array([done])
             # ]))
-            ic(next_obs['obs'])
-            ic(act)
             traj_data.append(np.concatenate([
                 next_obs['obs'], np.zeros_like(act).flatten()]))
             img_traj_data.append(next_obs['img'])

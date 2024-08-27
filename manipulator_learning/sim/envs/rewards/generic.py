@@ -29,6 +29,7 @@ def get_world_obj_pose(env, obj_id):
 
 def get_done_suc_fail(dist, reward, limit_reached, dense_reward, env_obj):
     done_success, done_failure = False, False
+    # print(dist,env_obj.reach_radius)
     if dist < env_obj.reach_radius:
         if env_obj.reach_radius_start_time is None:
             env_obj.reach_radius_start_time = env_obj.ep_timesteps
