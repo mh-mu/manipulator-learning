@@ -5,7 +5,7 @@ from manipulator_learning.sim.envs import *
 
 from manipulator_learning.learning.imitation.device_utils import CollectDevice
 from manipulator_learning.learning.imitation.collect_utils import *
-# import manipulator_learning.learning.data.img_depth_dataset as img_depth_dataset
+import manipulator_learning.learning.data.img_depth_dataset as img_depth_dataset
 import manipulator_learning.learning.data.img_dataset as img_dataset
 from manipulator_learning.learning.utils.absorbing_state import Mask
 
@@ -45,6 +45,7 @@ obs_is_dict = False
 if type(env.observation_space) == gym.spaces.dict.Dict:
     obs_is_dict = True
     img_traj_data = []
+    depth_traj_data = []
 
 env.seed()
 ic(obs_is_dict)
@@ -57,7 +58,8 @@ if obs_is_dict:
     obs_shape = env.observation_space.spaces['obs'].shape[0]
 else:
     obs_shape = env.observation_space.shape[0]
-ds = img_dataset.Dataset(data_dir, state_dim=obs_shape, act_dim=act_dim)
+# ds = img_dataset.Dataset(data_dir, state_dim=obs_shape, act_dim=act_dim)
+ds = img_depth_dataset.Dataset(data_dir, state_dim=obs_shape, act_dim=act_dim)
 
 # collection variables
 status_dict = {'record': False, 'num_demos': 0,
@@ -142,6 +144,7 @@ while(True):
                 #                                  np.array([rew]), np.array([done_mask]), np.array([done]) )))
                 traj_data.append(np.concatenate((obs['obs'], np.array(act).flatten())))
                 img_traj_data.append(obs['img'])
+                depth_traj_data.append(obs['depth'])
             else:
                 traj_data.append(np.concatenate((obs, np.array(act).flatten(), np.array([rew]))))
             fr_since_collect = 0
@@ -156,6 +159,7 @@ while(True):
         traj_data = []
         if obs_is_dict:
             img_traj_data = []
+            depth_traj_data = []
 
     # otherwise, save is defined by device pressing reset
     if args.save_on_success_only:
@@ -174,9 +178,10 @@ while(True):
             # traj_data.append(np.concatenate([
             #     next_obs['obs'], np.zeros_like(act).flatten()]))
             # img_traj_data.append(next_obs['img'])
+            # depth_traj_data.append(next_obs['depth'])
 
             # ds.append_traj_data_lists(traj_data, img_traj_data, final_obs_included=True)
-            ds.append_traj_data_lists(traj_data, img_traj_data, final_obs_included=False)
+            ds.append_traj_data_lists(traj_data, img_traj_data, depth_traj_data, final_obs_included=False)
         else:
             data.append(np.array(traj_data))
             traj_lens.append(ts)
@@ -191,6 +196,7 @@ while(True):
         traj_data = []
         if obs_is_dict:
             img_traj_data = []
+            depth_traj_data = []
 
     # if reset or done:
     if done:
@@ -203,6 +209,7 @@ while(True):
         traj_data = []
         if obs_is_dict:
             img_traj_data = []
+            depth_traj_data = []
         ts = 0
         status_dict['success'] = False
         ep_r = 0

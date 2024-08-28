@@ -100,7 +100,7 @@ class ThingInsertImage(ThingInsertGeneric):
         self.observation_space = spaces.Dict({
             'obs': spaces.Box(-np.inf, np.inf, (dim,), dtype=np.float32),
             'img': spaces.Box(0, 255, (image_height, image_width, 3), dtype=np.uint8),
-            #'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
+            'depth': spaces.Box(0, 1, (image_height, image_width), dtype=np.float32)
         })
         super().__init__('insertion', True, dense_reward, 'b',
                          state_data=state_data,

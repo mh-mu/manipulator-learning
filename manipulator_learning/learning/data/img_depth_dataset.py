@@ -4,6 +4,7 @@ from PIL import Image
 from multiprocessing import Pool
 from itertools import repeat
 import shutil
+from icecream import ic
 
 class Dataset:
     def __init__(self, data_dir, np_filename='data.npz', img_type='.png', imgs_per_folder=1000,
