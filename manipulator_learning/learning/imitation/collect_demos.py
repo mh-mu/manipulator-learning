@@ -1,6 +1,12 @@
 import argparse
 from datetime import datetime
 
+import sys
+import os
+
+root_dir = os.path.abspath('/gpfs/gibbs/project/dollar/mh2595/implicit_force_simulation/third_party/manipulator-learning')
+sys.path.append(root_dir)
+
 from manipulator_learning.sim.envs import *
 
 from manipulator_learning.learning.imitation.device_utils import CollectDevice
